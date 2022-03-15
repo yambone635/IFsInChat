@@ -24,17 +24,45 @@ class GameInstance(commands.Cog):
         self.interpreter = None
         self.running_game = False
     
+    @commands.slash_command(name = "list_games",
+        description = "Lists the available games.",
+        guild_ids = TEST_SERVER_GID)
+    async def list_games(self,
+                   inter: disnake.ApplicationCommandInteraction):
+        """Lists the available games."""
+        game_files = os.listdir("./games/")
+
+        game_list_string = "Games available:\n"
+        for game_filename in game_files:
+            game_name = game_filename.split(".")[0]
+            game_list_string += ' - ' + game_name + '\n'
+        game_list_string = game_list_string[:-1]
+
+        await inter.response.send_message(game_list_string)
+    
     @commands.slash_command(name = "start_game",
         description = "Starts a new game.",
         guild_ids = TEST_SERVER_GID)
     async def start_game(self,
-                   inter: disnake.ApplicationCommandInteraction):
+                   inter: disnake.ApplicationCommandInteraction,
+                   game_name):
         """Initializes the interpreter with a new game."""
+        game_files = os.listdir("./games/")
+        for game_candidate in game_files:
+            if game_candidate.split(".")[0] == game_name:
+                game_filename = game_candidate
+                break
+
+        if game_filename is None:
+            await inter.response.send_message(
+                "No games found with given name"
+            )
+            return
 
         if (self.interpreter is not None):
             self.interpreter.close()
 
-        self.interpreter = ifi.Interpreter(game_filename = "zork1.z3")
+        self.interpreter = ifi.Interpreter(game_filename)
         response = self.interpreter.get_output()
         await inter.response.send_message(response)
         self.running_game = True

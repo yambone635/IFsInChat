@@ -33,7 +33,7 @@ class Interpreter:
         os.makedirs(saves_path, exist_ok = True)
 
         self._interpreter = subprocess.Popen(
-            [interpreter_path, game_path],
+            [interpreter_path, "-m", game_path],
             stdin = subprocess.PIPE,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
