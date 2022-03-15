@@ -80,7 +80,7 @@ class GameInstance(commands.Cog):
     
     @commands.command(name="c")
     async def send_if_command_prefix(
-            self, ctx, if_command):
+            self, ctx, *, if_command):
         """Sends a command to the currently running game."""
         await ctx.send(self.send_command(if_command))
     
