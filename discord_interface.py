@@ -12,7 +12,7 @@ import if_interface as ifi
 load_dotenv()
 TEST_SERVER_GID = [int(os.environ["TEST_SERVER_GID"])]
 
-bot = commands.Bot()
+bot = commands.Bot(command_prefix = '!')
 
 @bot.event
 async def on_ready():
@@ -71,10 +71,20 @@ class GameInstance(commands.Cog):
         name = "c",
         description = "Sends a command to the currently running game.",
         guild_ids = TEST_SERVER_GID)
-    async def send_if_command(
+    async def send_if_command_slash(
             self,
             inter: disnake.ApplicationCommandInteraction,
             if_command):
+        """Sends a command to the currently running game."""
+        await inter.response.send_message(self.send_command(if_command))
+    
+    @commands.command(name="c")
+    async def send_if_command_prefix(
+            self, ctx, *, if_command):
+        """Sends a command to the currently running game."""
+        await ctx.send(self.send_command(if_command))
+    
+    def send_command(self, if_command):
         """Sends a command to the currently running game."""
         if (self.running_game):
             if not if_command:
@@ -83,13 +93,10 @@ class GameInstance(commands.Cog):
             print("Recieved command: " + if_command)
             
             self.interpreter.send_command(if_command.strip())
-            response = self.interpreter.get_output()
-
-            await inter.response.send_message(response)
+            return self.interpreter.get_output()
         else:
-            await inter.response.send_message(
-                "You need to start a game first!"
-            )
+            return "You need to start a game first!"
+
 
 def start_bot(bot_token):
     bot.add_cog(GameInstance(bot))
