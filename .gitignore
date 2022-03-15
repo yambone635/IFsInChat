@@ -8,5 +8,4 @@ __pycache__/
 *.env
 
 games/
-
-*.sav
+saves/

@@ -3,12 +3,14 @@
 
 from threading import Thread
 
+import os
 import subprocess
 import time
 
 # This should be the filename for the interpreter program. Assumed to be
 # in the top level of the project directory.
 _INTERPRETER_FILENAME = "dfrotz.exe"
+_SAVES_FOLDERNAME = "saves"
 
 done_flag = False
 
@@ -20,13 +22,22 @@ class Interpreter:
         self._processing_time = processing_time
 
         interpreter_path = "./" + _INTERPRETER_FILENAME
-        game_path = "./games/" + game_filename
+
+        game_name = game_filename.split(".")[0]
+        saves_path = ("./" + _SAVES_FOLDERNAME
+                      + "/" + game_name + "/")
+
+        game_path = "../../games/" + game_filename
+
+        # If the save directory doesn't exist, make it
+        os.makedirs(saves_path, exist_ok = True)
 
         self._interpreter = subprocess.Popen(
             [interpreter_path, game_path],
             stdin = subprocess.PIPE,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
+            cwd = saves_path,
             text = True,
             encoding = 'utf-8',
             errors="ignore"
