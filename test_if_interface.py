@@ -1,4 +1,4 @@
-"""Tests if_interface.py. Uses pytest.
+"""Tests the if_interface module.
 """
 
 import pytest

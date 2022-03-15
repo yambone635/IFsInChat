@@ -1,10 +1,13 @@
+"""Entry point for the bot client.
+"""
 
-import if_interface as ifi
+import os
 
-interpreter = ifi.Interpreter()
+from dotenv import load_dotenv
 
-interpreter.send_command("test")
+import discord_interface as di
 
-interpreter.close()
+load_dotenv()
+BOT_TOKEN = os.environ["BOT_TOKEN"]
 
-print(interpreter.get_output())
+di.start_bot(BOT_TOKEN)
