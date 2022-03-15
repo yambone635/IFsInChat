@@ -8,24 +8,28 @@ import time
 
 # This should be the filename for the interpreter program. Assumed to be
 # in the top level of the project directory.
-_INTERPRETER_FILENAME = "dummy_interpreter.exe"
-_CLOSE_COMMAND = "exit\n"
+_INTERPRETER_FILENAME = "dfrotz.exe"
+
+done_flag = False
 
 class Interpreter:
     """Handles all interactions with the IF interpreter.
     """
 
-    def __init__(self, processing_time = 0.1):
+    def __init__(self, game_filename, processing_time = 0.1):
         self._processing_time = processing_time
 
         interpreter_path = "./" + _INTERPRETER_FILENAME
+        game_path = "./games/" + game_filename
 
         self._interpreter = subprocess.Popen(
-            [interpreter_path, "test", "-abc", "--arguments"],
+            [interpreter_path, game_path],
             stdin = subprocess.PIPE,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
-            encoding = 'utf8'
+            text = True,
+            encoding = 'utf-8',
+            errors="ignore"
         )
         time.sleep(self._processing_time)
 
@@ -47,10 +51,11 @@ class Interpreter:
         Args:
             input (string): The command to send to the interpreter.
         """
-
-        self._interpreter.stdin.write(input + "\n")
-        self._interpreter.stdin.flush()
-        time.sleep(self._processing_time)
+        if (self._interpreter.poll() is None
+                and not self._interpreter.stdin.closed):
+            self._interpreter.stdin.write(input + "\n")
+            self._interpreter.stdin.flush()
+            time.sleep(self._processing_time)
     
     def get_output(self):
         """Gets any output that hasn't been retrieved yet.
@@ -59,23 +64,20 @@ class Interpreter:
             string: The full contents of the output buffer.
         """
 
+        if not self._interpreter_output_buffer:
+            return "No game is currently running."
+
         output = ""
-        while True:
-            if self._interpreter_output_buffer:
-                nextLine = self._interpreter_output_buffer.pop(0)
-                output += nextLine.strip() + '\n'
-            else:
-                break
+        while self._interpreter_output_buffer:
+            nextChar = self._interpreter_output_buffer.pop(0)
+            output += nextChar
+        
         return output
 
     def close(self):
         """Closes the interpreter.
         """
-
-        self.send_command(_CLOSE_COMMAND)
-        time.sleep(self._processing_time)
-
-        # Just in case the interpreter is still alive
+        
         self._interpreter.terminate()
 
 def _nonblocking_output_buffer(input_stream, buffer):
@@ -90,15 +92,16 @@ def _nonblocking_output_buffer(input_stream, buffer):
     def _read_stream(stream, buffer):
         while not stream.closed:
             stream.flush()
-            line = stream.readline()
-            if line:
-                buffer.append(line)
+            newoutput = stream.read(1)
+            if newoutput:
+                buffer.append(newoutput)
             else:
+                buffer.append("Game closed.\n")
                 break
 
     reading_thread = Thread(target = _read_stream,
                             args = (input_stream, buffer)
     )
-    # reading_thread.daemon = True
+    reading_thread.daemon = True
     reading_thread.start()
     return reading_thread
