@@ -5,4 +5,4 @@
 
 __pycache__/
 
-bot_info.txt
+*.env
