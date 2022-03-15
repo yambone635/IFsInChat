@@ -21,19 +21,47 @@ async def on_ready():
 class GameInstance(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.interpreter = ifi.Interpreter()
-        self.interpreter.get_output() # Clear the buffer
-
-    @commands.slash_command(name = "c",
-        description = "Sends a command to the currently running game.",
+        self.interpreter = None
+        self.running_game = False
+    
+    @commands.slash_command(name = "start_game",
+        description = "Starts a new game.",
         guild_ids = TEST_SERVER_GID)
-    async def test(self,
-                   inter: disnake.ApplicationCommandInteraction,
-                   if_command):
-        """Sends a command to the currently running game."""
-        self.interpreter.send_command(if_command)
+    async def start_game(self,
+                   inter: disnake.ApplicationCommandInteraction):
+        """Initializes the interpreter with a new game."""
+
+        if (self.interpreter is not None):
+            self.interpreter.close()
+
+        self.interpreter = ifi.Interpreter(game_filename = "zork1.z3")
         response = self.interpreter.get_output()
         await inter.response.send_message(response)
+        self.running_game = True
+
+    @commands.slash_command(
+        name = "c",
+        description = "Sends a command to the currently running game.",
+        guild_ids = TEST_SERVER_GID)
+    async def send_if_command(
+            self,
+            inter: disnake.ApplicationCommandInteraction,
+            if_command):
+        """Sends a command to the currently running game."""
+        if (self.running_game):
+            if not if_command:
+                if_command = ""
+            
+            print("Recieved command: " + if_command)
+            
+            self.interpreter.send_command(if_command.strip())
+            response = self.interpreter.get_output()
+
+            await inter.response.send_message(response)
+        else:
+            await inter.response.send_message(
+                "You need to start a game first!"
+            )
 
 def start_bot(bot_token):
     bot.add_cog(GameInstance(bot))
